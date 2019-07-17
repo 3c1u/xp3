@@ -10,7 +10,7 @@ pub mod Solve;
 pub mod XP3File;
 pub mod XP3Info;
 pub mod utils;
-
+pub mod extent;
 fn main() {
     let path = "test/1.xp3";
     let data = fs::read(path).expect("path not valid");
