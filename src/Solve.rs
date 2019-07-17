@@ -1,11 +1,14 @@
+use std::fs;
+use std::io::Read;
+use std::path::Path;
+
+use libflate::zlib::Decoder;
+
+use super::extent;
 use super::Header;
 use super::Segment;
 use super::XP3Info;
-use super::extent;
-use libflate::zlib::Decoder;
-use std::fs;
-use std::path::Path;
-use std::io::Read;
+
 pub struct XP3 {
     Header: Header::Header,
     XP3Info: XP3Info::XP3Info,
@@ -13,19 +16,21 @@ pub struct XP3 {
 }
 impl XP3 {
     pub fn get(&self, sg: &Segment::Segment) -> Vec<u8> {
-        let mut Raw=self.buf[sg.offset as usize..(sg.offset+sg.storageSize)as usize].to_vec();
-        if sg.flag==1 {
+        let mut Raw = self.buf[sg.offset as usize..(sg.offset + sg.storageSize) as usize].to_vec();
+        if sg.flag == 1 {
             let mut decode = Decoder::new(&Raw[..]).unwrap();
             let mut copy = Vec::new();
             decode.read_to_end(&mut copy).unwrap();
             Raw = copy;
         }
-        assert_eq!(Raw.len(),sg.originSize as usize);
+        assert_eq!(Raw.len(), sg.originSize as usize);
         extent::decode(&mut Raw);
         Raw
     }
     pub fn extract(&self, path: &str) {
-        fs::create_dir(path);
+        if !Path::exists(Path::new(path)) {
+            fs::create_dir(path).unwrap();
+        }
         for i in &self.XP3Info.XP3File {
             let fs = Path::new(path).join(i.fileName.clone());
             for j in 0..i.segmSize as usize {

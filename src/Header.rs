@@ -5,7 +5,7 @@ const HEADER: [u8; 11] = [
 ];
 const CUSHION_INDEX: [u8; 8] = [0x17, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0];
 const HEADER_MINOR_VERSION: [u8; 4] = [0x1, 0x0, 0x0, 0x0];
-const CUSHION_HEADER: [u8; 1] = [0x0];
+const CUSHION_HEADER: [u8; 1] = [0x80];
 const INDEX_SIZE: [u8; 8] = [0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0];
 
 pub struct Header {
@@ -33,7 +33,6 @@ pub fn unpack(buf: &Vec<u8>) -> (Header, usize) {
     }
     let mut p = if ver { 32 } else { 11 };
     let o = utils::ReadU64(&buf, &mut p);
-    println!("{:X}", o);
     (
         Header {
             offset: o,

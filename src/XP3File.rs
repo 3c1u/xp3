@@ -1,6 +1,5 @@
 use super::utils;
 use super::Segment;
-use crate::Solve::XP3;
 use std::string::String;
 
 const FILE: [u8; 4] = [0x46, 0x69, 0x6C, 0x65];
@@ -68,6 +67,10 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
         offset += 4;
         let adlrSize = utils::ReadU64(&buf, &mut offset);
         let key = utils::ReadU32(&buf, &mut offset);
+        if protect != 0 {
+            assert_eq!(protect, 1 << 31);
+            println!("{}:This File Does Not Wish to Be Extract", fileName)
+        }
         ret.push(XP3File {
             fileSize,
             infoSize,
