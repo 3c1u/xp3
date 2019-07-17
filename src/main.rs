@@ -12,8 +12,8 @@ pub mod XP3Info;
 pub mod utils;
 pub mod extent;
 fn main() {
-    let path = "test/1.xp3";
+    let path = "test/2.xp3";
     let data = fs::read(path).expect("path not valid");
     let res = Solve::unpack(&data).expect("Exact Failed");
-    res.extract("/home/rinne/桌面/XP3Parser/123");
+    res.extract("./123");
 }
