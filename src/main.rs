@@ -5,6 +5,7 @@
 use std::fs;
 
 pub mod Header;
+pub mod Segment;
 pub mod Solve;
 pub mod XP3File;
 pub mod XP3Info;
@@ -12,7 +13,7 @@ pub mod utils;
 
 fn main() {
     let path = "test/1.xp3";
-    let mut res = fs::read(path).expect("path not valid");
-    let res = Solve::unpack(&res).expect("Exact Failed");
+    let data = fs::read(path).expect("path not valid");
+    let res = Solve::unpack(&data).expect("Exact Failed");
     println!("Hello, world!");
 }
