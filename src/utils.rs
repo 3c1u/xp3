@@ -51,6 +51,5 @@ pub fn ReadUTF16(buf: &Vec<u8>, offset: &mut usize, len: u16) -> String {
     }
     let ret = String::from_utf16(comb.as_slice()).expect("Name Format Not Valid");
     *offset += 2 * len as usize;
-    println!("{} {}", len, ret);
     ret
 }
