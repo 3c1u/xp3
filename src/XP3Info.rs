@@ -29,15 +29,12 @@ pub fn unpack(buf: &Vec<u8>, mut offset: usize) -> (XP3Info, usize) {
         decode.read_to_end(&mut copy).unwrap();
         Raw = copy;
     }
+    println!("{} {} {}", zlib, psize, rsize);
     for i in &Raw {
         print!("{:X} ", i);
     }
     println!();
     let XP3File = XP3File::unpack(&mut Raw);
-    println!("{} {} {}\n", zlib, psize, rsize);
-    for i in &Raw {
-        print!("{:X} ", i);
-    }
     (
         XP3Info {
             zlib,

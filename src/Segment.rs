@@ -6,7 +6,6 @@ pub struct Segment {
     pub storageSize: u64,
 }
 pub fn unpack(buf: &Vec<u8>, mut o: usize) -> (Segment, usize) {
-    println!("{}", o);
     let flag = utils::ReadU32(buf, &mut o);
     let offset = utils::ReadU64(buf, &mut o);
     let originSize = utils::ReadU64(buf, &mut o);

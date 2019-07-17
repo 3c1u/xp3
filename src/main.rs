@@ -15,5 +15,4 @@ fn main() {
     let path = "test/1.xp3";
     let data = fs::read(path).expect("path not valid");
     let res = Solve::unpack(&data).expect("Exact Failed");
-    println!("Hello, world!");
 }

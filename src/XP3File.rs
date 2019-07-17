@@ -54,12 +54,9 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
         }
         offset += 4;
         let mut segmSize = utils::ReadU64(&buf, &mut offset);
-        assert!(segmSize%28==0);
-        segmSize/=28;
+        assert!(segmSize % 28 == 0);
+        segmSize /= 28;
         let mut seg = Vec::new();
-        println!("OK");
-        println!("seg {}", segmSize);
-        println!("{}", offset);
         for i in 0..segmSize {
             let (res, o) = Segment::unpack(&buf, offset.clone());
             offset = o;
