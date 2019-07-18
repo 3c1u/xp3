@@ -33,10 +33,12 @@ impl XP3 {
         }
         for i in &self.XP3Info.XP3File {
             let fs = Path::new(path).join(i.fileName.clone());
+            let mut file=Vec::new();
             for j in 0..i.segmSize as usize {
                 let data = self.get(&i.seg[j]);
-                fs::write(fs.clone(), data).unwrap();
+                file.extend_from_slice(data.as_slice());
             }
+            fs::write(&fs, file).unwrap();
             println!("{} done", fs.as_path().to_str().unwrap());
         }
     }
