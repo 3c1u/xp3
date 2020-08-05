@@ -1,5 +1,5 @@
+use super::file::{self, XP3File};
 use super::utils;
-use super::XP3File;
 use libflate::zlib::Decoder;
 use std::io::Read;
 
@@ -11,31 +11,31 @@ pub struct XP3Info {
     pub rsize: u64,
     // if zlib
     // 文件信息表解压后的大小
-    pub XP3File: Vec<XP3File::XP3File>,
+    pub file: Vec<XP3File>,
 }
 
 pub fn unpack(buf: &Vec<u8>, mut offset: usize) -> (XP3Info, usize) {
-    let zlib = utils::ReadU8(&buf, &mut offset);
-    let psize = utils::ReadU64(&buf, &mut offset);
+    let zlib = utils::read_u8(&buf, &mut offset);
+    let psize = utils::read_u64(&buf, &mut offset);
     let rsize = if zlib != 0 {
-        utils::ReadU64(&buf, &mut offset)
+        utils::read_u64(&buf, &mut offset)
     } else {
         psize
     };
-    let mut Raw = buf[offset..(offset + psize as usize)].to_vec();
+    let mut raw = buf[offset..(offset + psize as usize)].to_vec();
     if zlib != 0 {
-        let mut decode = Decoder::new(&Raw[..]).unwrap();
+        let mut decode = Decoder::new(&raw[..]).unwrap();
         let mut copy = Vec::new();
         decode.read_to_end(&mut copy).unwrap();
-        Raw = copy;
+        raw = copy;
     }
-    let XP3File = XP3File::unpack(&mut Raw);
+    let file = file::unpack(&mut raw);
     (
         XP3Info {
             zlib,
             psize,
             rsize,
-            XP3File,
+            file,
         },
         offset + psize as usize,
     )

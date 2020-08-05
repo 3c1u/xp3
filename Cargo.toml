@@ -1,8 +1,13 @@
 [package]
-name = "XP3Parser"
+name = "xp3parser"
 version = "1.0.0"
 authors = ["9646516 <zyq855@gmail.com>"]
 edition = "2018"
+
+[lib]
+crate-type = ["rlib"]
+name = "xp3"
+path = "lib/lib.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

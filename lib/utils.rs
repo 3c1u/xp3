@@ -1,6 +1,6 @@
 use std::string::String;
 
-pub fn Assert(buf: &Vec<u8>, cmp: &Vec<u8>, offset: usize) -> bool {
+pub fn assert(buf: &Vec<u8>, cmp: &Vec<u8>, offset: usize) -> bool {
     let len = cmp.len();
     for i in 0..len {
         if buf[offset + i] != cmp[i] {
@@ -10,13 +10,13 @@ pub fn Assert(buf: &Vec<u8>, cmp: &Vec<u8>, offset: usize) -> bool {
     true
 }
 
-pub fn ReadU8(buf: &Vec<u8>, offset: &mut usize) -> u8 {
+pub fn read_u8(buf: &Vec<u8>, offset: &mut usize) -> u8 {
     let ret: u8 = buf[*offset];
     *offset += 1;
     ret
 }
 
-pub fn ReadU16(buf: &Vec<u8>, offset: &mut usize) -> u16 {
+pub fn read_u16(buf: &Vec<u8>, offset: &mut usize) -> u16 {
     let mut ret: u16 = 0;
     for i in (0..2).rev() {
         ret = (ret << 8) + buf[i + *offset] as u16;
@@ -25,7 +25,7 @@ pub fn ReadU16(buf: &Vec<u8>, offset: &mut usize) -> u16 {
     ret
 }
 
-pub fn ReadU32(buf: &Vec<u8>, offset: &mut usize) -> u32 {
+pub fn read_u32(buf: &Vec<u8>, offset: &mut usize) -> u32 {
     let mut ret: u32 = 0;
     for i in (0..4).rev() {
         ret = (ret << 8) + buf[i + *offset] as u32;
@@ -34,7 +34,7 @@ pub fn ReadU32(buf: &Vec<u8>, offset: &mut usize) -> u32 {
     ret
 }
 
-pub fn ReadU64(buf: &Vec<u8>, offset: &mut usize) -> u64 {
+pub fn read_u64(buf: &Vec<u8>, offset: &mut usize) -> u64 {
     let mut ret: u64 = 0;
     for i in (0..8).rev() {
         ret = (ret << 8) + buf[i + *offset] as u64;
@@ -43,7 +43,7 @@ pub fn ReadU64(buf: &Vec<u8>, offset: &mut usize) -> u64 {
     ret
 }
 
-pub fn ReadUTF16(buf: &Vec<u8>, offset: &mut usize, len: u16) -> String {
+pub fn read_utf16(buf: &Vec<u8>, offset: &mut usize, len: u16) -> String {
     let slice = buf[*offset..*offset + 2 * len as usize].to_vec();
     let mut comb = Vec::new();
     for i in 0..len as usize {

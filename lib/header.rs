@@ -10,33 +10,33 @@ const INDEX_SIZE: [u8; 8] = [0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0];
 
 pub struct Header {
     pub offset: u64,
-    pub YoshiriVersion: bool,
+    pub yoshiri_version: bool,
 }
 
 pub fn unpack(buf: &Vec<u8>) -> (Header, usize) {
-    if !utils::Assert(&buf, &HEADER.to_vec(), 0) {
+    if !utils::assert(&buf, &HEADER.to_vec(), 0) {
         panic!("This is Not a Valid XP3 File (Header Failed)");
     }
-    let ver = utils::Assert(&buf, &CUSHION_INDEX.to_vec(), 11);
+    let ver = utils::assert(&buf, &CUSHION_INDEX.to_vec(), 11);
     if ver {
-        if !utils::Assert(&buf, &HEADER_MINOR_VERSION.to_vec(), 19) {
+        if !utils::assert(&buf, &HEADER_MINOR_VERSION.to_vec(), 19) {
             panic!("This is Not a Valid XP3 File (Header Minor Version Failed)");
         }
 
-        if !utils::Assert(&buf, &CUSHION_HEADER.to_vec(), 23) {
+        if !utils::assert(&buf, &CUSHION_HEADER.to_vec(), 23) {
             panic!("This is Not a Valid XP3 File (Cushion Header Failed)");
         }
 
-        if !utils::Assert(&buf, &INDEX_SIZE.to_vec(), 24) {
+        if !utils::assert(&buf, &INDEX_SIZE.to_vec(), 24) {
             panic!("This is Not a Valid XP3 File (Index Size Failed)");
         }
     }
     let mut p = if ver { 32 } else { 11 };
-    let o = utils::ReadU64(&buf, &mut p);
+    let o = utils::read_u64(&buf, &mut p);
     (
         Header {
             offset: o,
-            YoshiriVersion: ver,
+            yoshiri_version: ver,
         },
         p - 8,
     )
