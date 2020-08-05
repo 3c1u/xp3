@@ -32,52 +32,107 @@ pub struct XP3File {
 pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
     let mut offset = 0;
     let mut ret = Vec::new();
-    while offset + 4 <= buf.len() {
-        if !utils::assert(&buf, &FILE.to_vec(), offset.clone()) {
-            panic!("XP3File FILE Tag Failed");
-        }
-        offset += 4;
-        
-        let file_size = utils::read_u64(&buf, &mut offset);
-        if !utils::assert(&buf, &INFO.to_vec(), offset.clone()) {
-            panic!("XP3File Info Tag Failed");
-        }
-        offset += 4;
 
-        let info_size = utils::read_u64(&buf, &mut offset);
-        let protect = utils::read_u32(&buf, &mut offset);
-        let rsize = utils::read_u64(&buf, &mut offset);
-        let psize = utils::read_u64(&buf, &mut offset);
-        let name_len = utils::read_u16(&buf, &mut offset);
-        let file_name = utils::read_utf16(&buf, &mut offset, name_len.clone());
-
-        if !utils::assert(&buf, &SEGM.to_vec(), offset.clone()) {
-            panic!("XP3File SEGM Tag Failed");
-        }
-        offset += 4;
-
-        let mut segment_size = utils::read_u64(&buf, &mut offset);
-        assert!(segment_size % 28 == 0);
-        segment_size /= 28;
+    'outer: while offset + 4 <= buf.len() {
+        let mut file_size = 0;
+        let mut info_size = 0;
+        let mut protect = 0;
+        let mut rsize = 0;
+        let mut psize = 0;
+        let mut name_len = 0;
+        let mut file_name = String::new();
+        let mut adler_size = 0;
+        let mut key = 0;
+        let mut segment_size = 0;
         let mut seg = Vec::new();
 
-        for _i in 0..segment_size {
-            let (res, o) = segment::unpack(&buf, offset.clone());
-            offset = o;
-            seg.push(res);
+        let mut has_file = false;
+
+        loop {
+            use std::convert::TryInto;
+
+            if buf.len() <= offset {
+                break 'outer;
+            }
+
+            let header: &[u8; 4] = if let Ok(header) = buf[offset..][..4].try_into() {
+                header
+            } else {
+                panic!("failed to obtain the header");
+            };
+
+            offset += 4;
+
+            match header {
+                &FILE => {
+                    if has_file {
+                        offset -= 4;
+                        break;
+                    }
+
+                    file_size = utils::read_u64(&buf, &mut offset);
+                    has_file = true;
+                }
+                &ADLR => {
+                    adler_size = utils::read_u64(&buf, &mut offset);
+                    key = utils::read_u32(&buf, &mut offset);
+
+                    if !utils::assert(&buf, &SEGM, offset.clone()) {
+                        panic!("XP3File SEGM Tag Failed");
+                    }
+                }
+                &SEGM => {
+                    segment_size = utils::read_u64(&buf, &mut offset);
+
+                    assert!(segment_size % 28 == 0);
+                    segment_size /= 28;
+
+                    for _i in 0..segment_size {
+                        let (res, o) = segment::unpack(&buf, offset.clone());
+                        offset = o;
+                        seg.push(res);
+                    }
+                }
+                &INFO => {
+                    info_size = utils::read_u64(&buf, &mut offset);
+                    protect = utils::read_u32(&buf, &mut offset);
+                    rsize = utils::read_u64(&buf, &mut offset);
+                    psize = utils::read_u64(&buf, &mut offset);
+                    name_len = utils::read_u16(&buf, &mut offset);
+                    file_name = utils::read_utf16(&buf, &mut offset, name_len.clone());
+
+                    if protect != 0 {
+                        assert_eq!(protect, 1 << 31);
+                        /* println!(
+                            "{}: the file is protected; the extration might fail",
+                            file_name
+                        ); */
+                    }
+                }
+                _ => {
+                    if let Ok(_) = std::str::from_utf8(header) {
+                        // println!("unexpected header '{}'; skipping", header);
+                        let size = utils::read_u64(&buf, &mut offset);
+                        offset += size as usize;
+                    } else {
+                        panic!(
+                            "malformed header '{:x?}'. the header identifier must be ASCII",
+                            header
+                        );
+                    }
+                }
+            }
+
+            // skip zeros
+            while offset < buf.len() && buf[offset] == 0 {
+                offset += 1;
+            }
         }
 
-        if !utils::assert(&buf, &ADLR.to_vec(), offset.clone()) {
-            panic!("XP3File ADLR Tag Failed");
-        }
-        offset += 4;
-
-        let adler_size = utils::read_u64(&buf, &mut offset);
-        let key = utils::read_u32(&buf, &mut offset);
-
-        if protect != 0 {
-            assert_eq!(protect, 1 << 31);
-            println!("{}:This File Does Not Wish to Be Extract", file_name)
+        if file_name.len() >= 0x100 {
+            // bogus entry
+            println!("the filename is too long; probably a bogus entry: {}", file_name);
+            continue;
         }
 
         ret.push(XP3File {

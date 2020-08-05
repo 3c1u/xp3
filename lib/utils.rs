@@ -1,6 +1,6 @@
 use std::string::String;
 
-pub fn assert(buf: &Vec<u8>, cmp: &Vec<u8>, offset: usize) -> bool {
+pub fn assert(buf: &[u8], cmp: &[u8], offset: usize) -> bool {
     let len = cmp.len();
     for i in 0..len {
         if buf[offset + i] != cmp[i] {
