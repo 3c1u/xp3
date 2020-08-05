@@ -1,7 +1,7 @@
 [package]
 name = "xp3parser"
 version = "1.0.0"
-authors = ["9646516 <zyq855@gmail.com>"]
+authors = ["9646516 <zyq855@gmail.com>", "Hikaru Terazono (3c1u) <3c1u@vulpesgames.tokyo>"]
 edition = "2018"
 
 [lib]

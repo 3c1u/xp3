@@ -9,9 +9,9 @@ fn main() {
         .version("1.0.0")
         .author("9646516 <zyq855@gmail.com>")
         .arg(
-            Arg::with_name("Sourse")
+            Arg::with_name("Source")
                 .short("s")
-                .value_name("Sourse")
+                .value_name("Source")
                 .help("Path of XP3 File")
                 .takes_value(true)
                 .required(true),
@@ -25,7 +25,7 @@ fn main() {
                 .required(true),
         )
         .get_matches();
-    let path = matches.value_of("Sourse").expect("Need Sourse");
+    let path = matches.value_of("Source").expect("Need Source");
     let desk = matches.value_of("Desk").expect("Need Desk");
     let data = fs::read(path).expect("path not valid");
     let res = solve::unpack(&data).expect("Exact Failed");
