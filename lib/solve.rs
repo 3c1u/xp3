@@ -45,6 +45,7 @@ impl XP3 {
         }
     }
 }
+
 pub fn unpack(buf: &Vec<u8>) -> Result<XP3, ()> {
     let (header, _) = header::unpack(&buf);
     let (info, _) = info::unpack(&buf, header.offset as usize);
