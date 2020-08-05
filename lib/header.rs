@@ -15,20 +15,20 @@ pub struct Header {
 
 pub fn unpack(buf: &Vec<u8>) -> (Header, usize) {
     if !utils::assert(&buf, &HEADER.to_vec(), 0) {
-        panic!("This is Not a Valid XP3 File (Header Failed)");
+        panic!("invalid xp3 file: malformed header");
     }
     let ver = utils::assert(&buf, &CUSHION_INDEX.to_vec(), 11);
     if ver {
         if !utils::assert(&buf, &HEADER_MINOR_VERSION.to_vec(), 19) {
-            panic!("This is Not a Valid XP3 File (Header Minor Version Failed)");
+            panic!("invalid xp3 file: wrong minor version");
         }
 
         if !utils::assert(&buf, &CUSHION_HEADER.to_vec(), 23) {
-            panic!("This is Not a Valid XP3 File (Cushion Header Failed)");
+            panic!("invalid xp3 file: cushion header not present");
         }
 
         if !utils::assert(&buf, &INDEX_SIZE.to_vec(), 24) {
-            panic!("This is Not a Valid XP3 File (Index Size Failed)");
+            panic!("invalid xp3 file: wrong index size");
         }
     }
     let mut p = if ver { 32 } else { 11 };

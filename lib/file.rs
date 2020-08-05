@@ -8,27 +8,28 @@ const SEGM: [u8; 4] = [0x73, 0x65, 0x67, 0x6D];
 const ADLR: [u8; 4] = [0x61, 0x64, 0x6c, 0x72];
 
 pub struct XP3File {
+    /// Size of the `File` section.
     pub file_size: u64,
-    // 文件信息数据大小
+    /// Size of the `info` section.
     pub info_size: u64,
-    // 文件基本数据大小
+    /// Whether the file is encrypted.
     pub protect: u32,
-    // 估计是表示此文件是否加过密
+    /// Entry size after extraction.
     pub rsize: u64,
-    // 文件原始大小
+    /// Entry size before extraction
     pub psize: u64,
-    // 文件包中大小
+    /// The length of the name.
     pub name_len: u16,
-    // 文件名长度（指的是UTF-16字符个数）
+    /// File name.
     pub file_name: String,
-    // 文件名(UTF-16LE编码，无0结尾) nameLen wchar_t
+    /// Size of the `segm` section.
     pub segment_size: u64,
-    // 文件段数据大小
+    // Segments.
     pub seg: Vec<Segment>,
+    /// Size of the `adlr` section. (4 bytes)
     pub adler_size: u64,
-    // 文件附加数据大小，一般是4
+    /// Adler-32 checksum.
     pub key: u32,
-    // 附加数据，用于加密
 }
 
 pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
@@ -105,10 +106,10 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
 
                     if protect != 0 {
                         assert_eq!(protect, 1 << 31);
-                        /* println!(
+                        log::warn!(
                             "{}: the file is protected; the extration might fail",
                             file_name
-                        ); */
+                        );
                     }
                 }
                 _ => {
@@ -125,7 +126,7 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
                 }
             }
 
-            // skip zeros
+            // skip zeros (the header should be four characters)
             while offset < buf.len() && buf[offset] == 0 {
                 offset += 1;
             }
@@ -133,8 +134,8 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
 
         if file_name.len() >= 0x100 {
             // bogus entry
-            println!(
-                "the filename is too long; probably a bogus entry: {}",
+            log::warn!(
+                "the filename is too long; probably a bogus entry: \"{}\"",
                 file_name
             );
             continue;

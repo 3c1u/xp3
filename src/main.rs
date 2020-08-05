@@ -9,25 +9,33 @@ fn main() {
         .version("1.0.0")
         .author("9646516 <zyq855@gmail.com>")
         .arg(
-            Arg::with_name("Source")
+            Arg::with_name("source")
                 .short("s")
-                .value_name("Source")
+                .value_name("SRC")
                 .help("Path of XP3 File")
                 .takes_value(true)
                 .required(true),
         )
         .arg(
-            Arg::with_name("Desk")
+            Arg::with_name("destination")
                 .short("d")
-                .value_name("Desk")
+                .value_name("DEST")
                 .help("Path of Output Directory")
                 .takes_value(true)
                 .required(true),
         )
         .get_matches();
-    let path = matches.value_of("Source").expect("Need Source");
-    let desk = matches.value_of("Desk").expect("Need Desk");
-    let data = fs::read(path).expect("path not valid");
-    let res = solve::unpack(&data).expect("Exact Failed");
-    res.extract(desk);
+
+    // enable logger
+    simple_logger::init().unwrap();
+
+    let path = matches
+        .value_of("source")
+        .expect("no archive files are given");
+    let desk = matches
+        .value_of("destination")
+        .expect("no destination directory is given");
+    let data = fs::read(path).expect("invalid path");
+    let res = solve::unpack(&data).expect("parse failed");
+    // res.extract(desk);
 }

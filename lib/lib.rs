@@ -1,7 +1,8 @@
+pub(crate) mod cxdec;
 pub mod extent;
 pub mod file;
 pub mod header;
 pub mod info;
 pub mod segment;
 pub mod solve;
-pub mod utils;
+pub(crate) mod utils;
