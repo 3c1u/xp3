@@ -16,9 +16,9 @@ impl Rng {
         Rng(seed)
     }
 
-    pub fn peek(&self) -> u32 {
+    /* pub fn peek(&self) -> u32 {
         self.0
-    }
+    } */
 
     pub fn next(&mut self) -> u32 {
         let old_seed = self.0;

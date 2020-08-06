@@ -1,5 +1,4 @@
 pub(crate) mod cxdec;
-pub mod extent;
 pub mod file;
 pub mod header;
 pub mod info;

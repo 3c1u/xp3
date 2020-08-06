@@ -4,7 +4,6 @@ use std::path::Path;
 
 use libflate::zlib::Decoder;
 
-use super::extent;
 use super::header::{self, Header};
 use super::info::{self, XP3Info};
 use super::segment::Segment;
@@ -46,7 +45,10 @@ impl XP3 {
                 let data = self.get(&i.seg[j], &mut decoder, i.key);
                 file.extend_from_slice(data.as_slice());
             }
-            let _ = fs::write(&fs, file);
+
+            let _ = fs::create_dir_all(fs.parent().unwrap());
+            
+            fs::write(&fs, file).unwrap();
             println!("{} done", fs.as_path().to_str().unwrap());
         }
     }

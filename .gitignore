@@ -18,3 +18,5 @@ Cargo.lock
 
 /target
 #**/*.rs.bk
+
+data/
