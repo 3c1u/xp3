@@ -52,6 +52,7 @@ impl CxDec {
     pub fn decrypt(&mut self, mut buffer: &mut [u8], key: u32, mut offset: usize) {
         let boundary = ((key & 0x17c) + 0x77) as usize;
 
+        // decode the first chunk of the buffer
         if offset < boundary {
             let dec_len = buffer.len().min(boundary - offset);
 
@@ -84,12 +85,13 @@ impl CxDec {
         let key4 = ((v0 >> 16) & 0xff) as u8;
         let key5 = ((v0 >> 8) & 0xff) as u8;
 
-        if key2 >= offset && key2 < offset + buffer.len() as u32 {
+        // perform decryption
+        if key2 >= offset && (key2 - offset) < buffer.len() as u32 {
             buffer[(key2 - offset) as usize] ^= key4;
         }
 
-        if key1 >= offset && key1 < offset + buffer.len() as u32 {
-            buffer[(key2 - offset) as usize] ^= key5;
+        if key1 >= offset && (key1 - offset) < buffer.len() as u32 {
+            buffer[(key1 - offset) as usize] ^= key5;
         }
 
         for v in buffer {

@@ -32,10 +32,10 @@ fn main() {
     let path = matches
         .value_of("source")
         .expect("no archive files are given");
-    let desk = matches
+    let dest = matches
         .value_of("destination")
         .expect("no destination directory is given");
     let data = fs::read(path).expect("invalid path");
     let res = solve::unpack(&data).expect("parse failed");
-    // res.extract(desk);
+    res.extract(dest);
 }
