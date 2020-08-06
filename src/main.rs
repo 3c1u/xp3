@@ -2,7 +2,7 @@ use clap::App;
 use clap::Arg;
 use std::fs;
 
-use xp3::solve;
+use xp3::Xp3;
 
 fn main() {
     let matches = App::new("XP3Parser")
@@ -36,6 +36,6 @@ fn main() {
         .value_of("destination")
         .expect("no destination directory is given");
     let data = fs::read(path).expect("invalid path");
-    let res = solve::unpack(&data).expect("parse failed");
+    let res = Xp3::open(&data).expect("parse failed");
     res.extract(dest);
 }

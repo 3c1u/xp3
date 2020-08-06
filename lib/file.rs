@@ -79,15 +79,11 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
                 &ADLR => {
                     adler_size = utils::read_u64(&buf, &mut offset);
                     key = utils::read_u32(&buf, &mut offset);
-
-                    if !utils::assert(&buf, &SEGM, offset.clone()) {
-                        panic!("XP3File SEGM Tag Failed");
-                    }
                 }
                 &SEGM => {
                     segment_size = utils::read_u64(&buf, &mut offset);
 
-                    assert!(segment_size % 28 == 0);
+                    assert!(segment_size % 28 == 0, "segment size must be a multiple of 28");
                     segment_size /= 28;
 
                     for _i in 0..segment_size {
@@ -113,13 +109,13 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
                     }
                 }
                 _ => {
-                    if let Ok(_) = std::str::from_utf8(header) {
-                        // println!("unexpected header '{}'; skipping", header);
+                    if let Ok(header) = std::str::from_utf8(header) {
+                        log::warn!("unrecognized header '{}'; skipping", header);
                         let size = utils::read_u64(&buf, &mut offset);
                         offset += size as usize;
                     } else {
                         panic!(
-                            "malformed header '{:x?}'. the header identifier must be ASCII",
+                            "malformed header '{:x?}'. the header identifier must be four characters in ASCII",
                             header
                         );
                     }

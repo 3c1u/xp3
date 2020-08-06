@@ -1,7 +1,14 @@
+//! #xp3
+//!
+//! Decoder and extractor of .xp3 archives.
+
 pub(crate) mod cxdec;
-pub mod file;
-pub mod header;
-pub mod info;
-pub mod segment;
-pub mod solve;
 pub(crate) mod utils;
+
+pub(crate) mod file;
+pub(crate) mod header;
+pub(crate) mod info;
+pub(crate) mod segment;
+pub(crate) mod solve;
+
+pub use solve::Xp3;

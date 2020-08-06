@@ -10,15 +10,28 @@ use super::segment::Segment;
 
 use super::cxdec::CxDec;
 
-pub struct XP3 {
+/// An `.xp3` archive.
+pub struct Xp3 {
     #[allow(dead_code)]
     header: Header,
     info: XP3Info,
     buf: Vec<u8>,
 }
 
-impl XP3 {
-    pub fn get(&self, sg: &Segment, decoder: &mut CxDec, key: u32) -> Vec<u8> {
+impl Xp3 {
+    /// Opens an `.xp3` archive.
+    pub fn open(buf: &Vec<u8>) -> Result<Self, ()> {
+        let (header, _) = header::unpack(&buf);
+        let (info, _) = info::unpack(&buf, header.offset as usize);
+
+        Ok(Xp3 {
+            header,
+            info,
+            buf: buf.clone(),
+        })
+    }
+
+    pub(crate) fn get(&self, sg: &Segment, decoder: &mut CxDec, key: u32) -> Vec<u8> {
         let mut raw = self.buf[sg.offset as usize..(sg.offset + sg.storage_size) as usize].to_vec();
         if sg.flag == 1 {
             let mut decode = Decoder::new(&raw[..]).unwrap();
@@ -31,6 +44,7 @@ impl XP3 {
         raw
     }
 
+    /// Extracts an `.xp3` archive into the specified directory.
     pub fn extract(&self, path: &str) {
         let mut decoder = CxDec::new();
 
@@ -49,17 +63,7 @@ impl XP3 {
             let _ = fs::create_dir_all(fs.parent().unwrap());
             
             fs::write(&fs, file).unwrap();
-            println!("{} done", fs.as_path().to_str().unwrap());
+            log::debug!("{} done", fs.as_path().to_str().unwrap());
         }
     }
-}
-
-pub fn unpack(buf: &Vec<u8>) -> Result<XP3, ()> {
-    let (header, _) = header::unpack(&buf);
-    let (info, _) = info::unpack(&buf, header.offset as usize);
-    return Ok(XP3 {
-        header,
-        info,
-        buf: buf.clone(),
-    });
 }
