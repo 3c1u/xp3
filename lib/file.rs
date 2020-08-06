@@ -83,7 +83,10 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
                 &SEGM => {
                     segment_size = utils::read_u64(&buf, &mut offset);
 
-                    assert!(segment_size % 28 == 0, "segment size must be a multiple of 28");
+                    assert!(
+                        segment_size % 28 == 0,
+                        "segment size must be a multiple of 28"
+                    );
                     segment_size /= 28;
 
                     for _i in 0..segment_size {

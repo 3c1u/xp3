@@ -61,7 +61,7 @@ impl Xp3 {
             }
 
             let _ = fs::create_dir_all(fs.parent().unwrap());
-            
+
             fs::write(&fs, file).unwrap();
             log::debug!("{} done", fs.as_path().to_str().unwrap());
         }
