@@ -105,7 +105,7 @@ impl<'a> Code<'a> {
                 let tmp = self.rng.next() & 0x3FF;
                 self.append_code(4)?;
 
-                Some(self.scheme.table_block[tmp as usize])
+                Some(self.scheme.control_block[tmp as usize])
             }
             1 => {
                 // mov eax, rand()
@@ -161,7 +161,7 @@ impl<'a> Code<'a> {
                 // mov eax, dword ptr ds:[esi+eax*4]
                 self.append_code(13)?;
 
-                eax = self.scheme.table_block[(eax & 0x3FF) as usize];
+                eax = self.scheme.control_block[(eax & 0x3FF) as usize];
             }
             2 => {
                 // xor eax, rand()

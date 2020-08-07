@@ -34,7 +34,7 @@ pub struct CxDec<'a> {
 pub struct CxDecScheme {
     pub shuffler0: Vec<i32>,
     pub shuffler1: Vec<i32>,
-    pub table_block: Vec<u32>,
+    pub control_block: Vec<u32>,
 }
 
 use std::path::Path;
@@ -43,6 +43,7 @@ impl CxDecScheme {
     pub fn open<P: AsRef<Path>>(path: P) -> std::io::Result<Self> {
         use miniserde::json;
         use miniserde::Deserialize;
+
         #[derive(Deserialize)]
         struct CxDecSchemeTemplate {
             #[serde(rename = "cxdec.shuffler0")]
@@ -59,7 +60,7 @@ impl CxDecScheme {
         Ok(Self {
             shuffler0: c.shuffler0,
             shuffler1: c.shuffler1,
-            table_block: generate_control_block(&c.blob),
+            control_block: generate_control_block(&c.blob),
         })
     }
 }
