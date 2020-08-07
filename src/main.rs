@@ -3,6 +3,7 @@ use clap::Arg;
 use std::fs;
 
 use xp3::Xp3;
+use xp3::cxdec::{CxDec, CxDecScheme};
 
 fn main() {
     let matches = App::new("XP3Parser")
@@ -12,7 +13,7 @@ fn main() {
             Arg::with_name("source")
                 .short("s")
                 .value_name("SRC")
-                .help("Path of XP3 File")
+                .help("path to an XP3 file")
                 .takes_value(true)
                 .required(true),
         )
@@ -20,7 +21,15 @@ fn main() {
             Arg::with_name("destination")
                 .short("d")
                 .value_name("DEST")
-                .help("Path of Output Directory")
+                .help("path of the putput directory")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("scheme")
+                .short("S")
+                .value_name("SCHEME")
+                .help("path to the scheme file")
                 .takes_value(true)
                 .required(true),
         )
@@ -35,7 +44,14 @@ fn main() {
     let dest = matches
         .value_of("destination")
         .expect("no destination directory is given");
+    let scheme = matches
+        .value_of("scheme")
+        .expect("no scheme is given");
     let data = fs::read(path).expect("invalid path");
     let res = Xp3::open(&data).expect("parse failed");
-    res.extract(dest);
+
+    let scheme =
+    CxDecScheme::open(scheme).expect("failed to load the scheme");
+    let decoder = CxDec::new(&scheme);
+    res.extract(dest, decoder);
 }

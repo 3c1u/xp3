@@ -1,10 +1,13 @@
+use super::CxDecScheme;
+
 /// X-code?
 #[derive(Clone)]
-pub struct Code {
+pub struct Code<'s> {
     rng: Rng,
     seed: u32,
     parameter: u32,
     code_len: usize,
+    scheme: &'s CxDecScheme,
 }
 
 /// Random number generator.
@@ -31,9 +34,9 @@ impl Rng {
     }
 }
 
-impl Code {
+impl<'a> Code<'a> {
     /// Creates a code from the given index.
-    pub fn new(seed: u32) -> Code {
+    pub fn new(seed: u32, scheme: &'a CxDecScheme) -> Self {
         // create a random number generator
         let rng = Rng::new(seed);
 
@@ -42,6 +45,7 @@ impl Code {
             seed,
             parameter: 0,
             code_len: 0,
+            scheme,
         }
     }
 
@@ -61,7 +65,7 @@ impl Code {
     }
 
     fn try_execute(&mut self, stage: u32) -> Option<u32> {
-        // clear the shellcode buffer
+        // clear the code buffer
         self.code_len = 0;
 
         // push edi, push esi, push ebx, push ecx, push edx
@@ -80,7 +84,7 @@ impl Code {
     fn append_code(&mut self, len: usize) -> Option<()> {
         self.code_len += len;
 
-        // if the shellcode overflows, return None
+        // if the code overflows, return None
         if self.code_len > 0x80 {
             None
         } else {
@@ -101,7 +105,7 @@ impl Code {
                 let tmp = self.rng.next() & 0x3FF;
                 self.append_code(4)?;
 
-                Some(super::CTRL_BLOCK[tmp as usize])
+                Some(self.scheme.table_block[tmp as usize])
             }
             1 => {
                 // mov eax, rand()
@@ -133,34 +137,6 @@ impl Code {
         let routine = self.rng.next() % 8;
 
         match routine {
-            4 => {
-                // not eax
-                self.append_code(2)?;
-                eax ^= 0xFFFFFFFF;
-            }
-            6 => {
-                // dec eax
-                self.append_code(1)?;
-                eax = eax.wrapping_sub(1);
-            }
-            3 => {
-                // neg eax
-                self.append_code(2)?;
-                eax = (-(eax as i32)) as u32;
-            }
-            7 => {
-                // inc eax
-                self.append_code(1)?;
-                eax = eax.wrapping_add(1);
-            }
-            1 => {
-                // mov esi, &settings.control_block
-                // and eax, 3ff
-                // mov eax, dword ptr ds:[esi+eax*4]
-                self.append_code(13)?;
-
-                eax = super::CTRL_BLOCK[(eax & 0x3FF) as usize];
-            }
             0 => {
                 // push ebx
                 // mov ebx, eax
@@ -179,12 +155,30 @@ impl Code {
                 eax <<= 1;
                 eax |= ebx;
             }
+            1 => {
+                // mov esi, &settings.control_block
+                // and eax, 3ff
+                // mov eax, dword ptr ds:[esi+eax*4]
+                self.append_code(13)?;
+
+                eax = self.scheme.table_block[(eax & 0x3FF) as usize];
+            }
             2 => {
                 // xor eax, rand()
                 self.append_code(1)?;
                 let tmp = self.rng.next();
                 self.append_code(4)?;
                 eax ^= tmp;
+            }
+            3 => {
+                // neg eax
+                self.append_code(2)?;
+                eax = (-(eax as i32)) as u32;
+            }
+            4 => {
+                // not eax
+                self.append_code(2)?;
+                eax ^= 0xFFFFFFFF;
             }
             5 => {
                 if (self.rng.next() & 1) != 0 {
@@ -202,6 +196,16 @@ impl Code {
 
                     eax = eax.wrapping_sub(tmp);
                 }
+            }
+            6 => {
+                // dec eax
+                self.append_code(1)?;
+                eax = eax.wrapping_sub(1);
+            }
+            7 => {
+                // inc eax
+                self.append_code(1)?;
+                eax = eax.wrapping_add(1);
             }
             _ => unreachable!("bad routine number"),
         }
@@ -236,6 +240,11 @@ impl Code {
         let routine = self.rng.next() % 6;
 
         match routine {
+            0 => {
+                // add eax, ebx
+                self.append_code(2)?;
+                eax = eax.wrapping_add(ebx);
+            }
             1 => {
                 // push ecx
                 // mov ecx, ebx
@@ -247,22 +256,6 @@ impl Code {
                 let ecx = ebx & 0x0F;
                 eax >>= ecx;
             }
-            4 => {
-                // push ecx
-                // mov ecx, ebx
-                // and ecx, 0f
-                // shl eax, cl
-                // pop ecx
-                self.append_code(9)?;
-
-                let ecx = ebx & 0x0F;
-                eax <<= ecx;
-            }
-            0 => {
-                // add eax, ebx
-                self.append_code(2)?;
-                eax = eax.wrapping_add(ebx);
-            }
             2 => {
                 // neg eax
                 // add eax, ebx
@@ -273,6 +266,17 @@ impl Code {
                 // imul eax, ebx
                 self.append_code(3)?;
                 eax = eax.wrapping_mul(ebx);
+            }
+            4 => {
+                // push ecx
+                // mov ecx, ebx
+                // and ecx, 0f
+                // shl eax, cl
+                // pop ecx
+                self.append_code(9)?;
+
+                let ecx = ebx & 0x0F;
+                eax <<= ecx;
             }
             5 => {
                 // sub eax, ebx

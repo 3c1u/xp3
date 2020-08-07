@@ -21,3 +21,5 @@ Cargo.lock
 
 data/
 .DS_Store
+
+database/

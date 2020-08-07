@@ -2,13 +2,13 @@ use std::fs;
 use std::io::Read;
 use std::path::Path;
 
-use libflate::zlib::Decoder;
+use libflate::zlib::Decoder as ZlibDecoder;
 
 use super::header::{self, Header};
 use super::info::{self, XP3Info};
 use super::segment::Segment;
 
-use super::cxdec::CxDec;
+use crate::Decoder;
 
 /// An `.xp3` archive.
 pub struct Xp3 {
@@ -31,10 +31,10 @@ impl Xp3 {
         })
     }
 
-    pub(crate) fn get(&self, sg: &Segment, decoder: &mut CxDec, key: u32) -> Vec<u8> {
+    pub(crate) fn get<D: Decoder>(&self, sg: &Segment, decoder: &mut D, key: u32) -> Vec<u8> {
         let mut raw = self.buf[sg.offset as usize..(sg.offset + sg.storage_size) as usize].to_vec();
         if sg.flag == 1 {
-            let mut decode = Decoder::new(&raw[..]).unwrap();
+            let mut decode = ZlibDecoder::new(&raw[..]).unwrap();
             let mut copy = Vec::new();
             decode.read_to_end(&mut copy).unwrap();
             raw = copy;
@@ -45,8 +45,8 @@ impl Xp3 {
     }
 
     /// Extracts an `.xp3` archive into the specified directory.
-    pub fn extract(&self, path: &str) {
-        let mut decoder = CxDec::new();
+    pub fn extract<D: Decoder>(&self, path: &str, decoder: D) {
+        let mut decoder = decoder;
 
         if !Path::exists(Path::new(path)) {
             fs::create_dir(path).unwrap();

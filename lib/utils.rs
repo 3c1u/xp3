@@ -49,7 +49,7 @@ pub fn read_utf16(buf: &Vec<u8>, offset: &mut usize, len: u16) -> String {
     for i in 0..len as usize {
         comb.push(((slice[i * 2 + 1] as u16) << 8) | (slice[i * 2] as u16));
     }
-    let ret = String::from_utf16(comb.as_slice()).expect("Name Format Not Valid");
+    let ret = String::from_utf16(comb.as_slice()).expect("invalid UTF-16 string");
     *offset += 2 * len as usize;
     ret
 }

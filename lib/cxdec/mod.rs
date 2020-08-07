@@ -1,22 +1,11 @@
-use lazy_static::*;
-
-// NOTE: required for decoding.
-// Copy tempBlock from xp3filter.tjs to table.rs as `TEMP_BLOCK: &[u8]` to make this work.
-// Alternatively, you can use the control block in u32 format from the decryption scheme (and replace the CTRL_BLOCK below).
-mod table;
-
 /// x-code executor.
 mod code;
 
-lazy_static! {
-    pub(super) static ref CTRL_BLOCK: Vec<u32> = generate_control_block();
-}
+use crate::Decoder;
 
 /// Generates the control block from `tempBlock` (or `TEMP_BLOCK`).
-fn generate_control_block() -> Vec<u32> {
-    use table::TEMP_BLOCK;
-
-    let total_len = TEMP_BLOCK.len() >> 2;
+fn generate_control_block(block: &[u8]) -> Vec<u32> {
+    let total_len = block.len() >> 2;
     let mut ctrl_block = Vec::with_capacity(total_len);
 
     ctrl_block.resize_with(total_len, || 0u32);
@@ -24,10 +13,10 @@ fn generate_control_block() -> Vec<u32> {
     for i in 0..total_len {
         let offset = i << 2;
         ctrl_block[i] = u32::from_le_bytes([
-            TEMP_BLOCK[offset],
-            TEMP_BLOCK[offset + 1],
-            TEMP_BLOCK[offset + 2],
-            TEMP_BLOCK[offset + 3],
+            block[offset],
+            block[offset + 1],
+            block[offset + 2],
+            block[offset + 3],
         ]);
     }
 
@@ -37,35 +26,49 @@ fn generate_control_block() -> Vec<u32> {
 use code::Code;
 
 /// cxdec decoder scheme.
-pub struct CxDec {
-    code: Vec<Option<Code>>,
+pub struct CxDec<'a> {
+    code: Vec<Option<Code<'a>>>,
+    scheme: &'a CxDecScheme,
 }
 
-impl CxDec {
-    pub fn new() -> CxDec {
+pub struct CxDecScheme {
+    pub shuffler0: Vec<i32>,
+    pub shuffler1: Vec<i32>,
+    pub table_block: Vec<u32>,
+}
+
+use std::path::Path;
+
+impl CxDecScheme {
+    pub fn open<P: AsRef<Path>>(path: P) -> std::io::Result<Self> {
+        use miniserde::json;
+        use miniserde::Deserialize;
+        #[derive(Deserialize)]
+        struct CxDecSchemeTemplate {
+            #[serde(rename = "cxdec.shuffler0")]
+            pub shuffler0: Vec<i32>,
+            #[serde(rename = "cxdec.shuffler1")]
+            pub shuffler1: Vec<i32>,
+            #[serde(rename = "cxdec.blob")]
+            pub blob: Vec<u8>,
+        }
+
+        let c: CxDecSchemeTemplate =
+            json::from_str(&std::fs::read_to_string(path)?).expect("failed to parse json");
+
+        Ok(Self {
+            shuffler0: c.shuffler0,
+            shuffler1: c.shuffler1,
+            table_block: generate_control_block(&c.blob),
+        })
+    }
+}
+
+impl<'a> CxDec<'a> {
+    pub fn new(scheme: &'a CxDecScheme) -> CxDec<'a> {
         CxDec {
             code: vec![None; 0x80],
-        }
-    }
-
-    /// Decrypts the buffer with a given key. In most cases, the key is the hash of the entry.
-    pub fn decrypt(&mut self, mut buffer: &mut [u8], key: u32, mut offset: usize) {
-        let boundary = ((key & 0x17c) + 0x77) as usize;
-
-        // decode the first chunk of the buffer
-        if offset < boundary {
-            let dec_len = buffer.len().min(boundary - offset);
-
-            self.decrypt_inner(&mut buffer[..dec_len], key, offset);
-
-            // skip decoded section
-            offset += dec_len; // TODO: this is somehow used in decrypt_inner
-            buffer = &mut buffer[dec_len..];
-        }
-
-        if buffer.len() != 0 {
-            // rotate key and decode the rest
-            self.decrypt_inner(&mut buffer, (key >> 16) ^ key, offset);
+            scheme,
         }
     }
 
@@ -106,11 +109,33 @@ impl CxDec {
         let code = if let Some(code) = &mut self.code[index as usize] {
             code
         } else {
-            let code = Code::new(index);
+            let code = Code::new(index, self.scheme);
             self.code[index as usize] = Some(code);
             self.code[index as usize].as_mut().unwrap()
         };
 
         (code.execute(value), code.execute(!value))
+    }
+}
+
+impl<'a> Decoder for CxDec<'a> {
+    fn decrypt(&mut self, mut buffer: &mut [u8], key: u32, mut offset: usize) {
+        let boundary = ((key & 0x17c) + 0x77) as usize;
+
+        // decode the first chunk of the buffer
+        if offset < boundary {
+            let dec_len = buffer.len().min(boundary - offset);
+
+            self.decrypt_inner(&mut buffer[..dec_len], key, offset);
+
+            // skip decoded section
+            offset += dec_len; // TODO: this is somehow used in decrypt_inner
+            buffer = &mut buffer[dec_len..];
+        }
+
+        if buffer.len() != 0 {
+            // rotate key and decode the rest
+            self.decrypt_inner(&mut buffer, (key >> 16) ^ key, offset);
+        }
     }
 }
