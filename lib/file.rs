@@ -36,7 +36,7 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
     let mut offset = 0;
     let mut ret = Vec::new();
 
-    'outer: while offset + 4 <= buf.len() {
+    'outer: loop {
         let mut file_size = 0;
         let mut info_size = 0;
         let mut protect = 0;
@@ -55,6 +55,21 @@ pub fn unpack(buf: &mut Vec<u8>) -> Vec<XP3File> {
             use std::convert::TryInto;
 
             if buf.len() <= offset {
+                if has_file {
+                    ret.push(XP3File {
+                        file_size,
+                        info_size,
+                        protect,
+                        rsize,
+                        psize,
+                        name_len,
+                        file_name,
+                        segment_size,
+                        seg,
+                        adler_size,
+                        key,
+                    });
+                }
                 break 'outer;
             }
 
