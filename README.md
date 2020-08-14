@@ -1,6 +1,5 @@
-# XP3Parser
-## How to Build
+# xp3 unpacker
+
+```console
+$ cargo run --relase -- -s data.xp3 -d ./data -S ./otome_domain.json
 ```
-cargo run --release
-```
-Reference:[http://keepcreating.g2.xrea.com/DojinDOC/xp3file.html](http://keepcreating.g2.xrea.com/DojinDOC/xp3file.html)
